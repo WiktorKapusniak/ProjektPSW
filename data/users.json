@@ -1,0 +1,24 @@
+{
+  "users": [
+    {
+      "username": "kacper",
+      "password": "$2b$10$imGCYwRp17pKrDunW9bJxu.3TZhIlzUocOFeigNr1/dyzFegXSnxW"
+    },
+    {
+      "username": "kasod",
+      "password": "$2b$10$aI9bIkTYOKmfXiFRE4ZddOUhBPnX4/xvtKxkDY6.JZSnUBDCOpO6."
+    },
+    {
+      "username": "test",
+      "password": "$2b$10$OrVDq0ZqWCdB0YkWEUyW5.D1SOLZgwAIlfa.1Pi/TxDT6.VcPJbYy"
+    },
+    {
+      "username": "dupa",
+      "password": "$2b$10$70Nl2bRDk58M9Hee9UgyxuWCalwahnLbbN2HaKn.fZjakOKEPp4h6"
+    },
+    {
+      "username": "lfn",
+      "password": "$2b$10$eBkGSMRhR1GwSZIhB26jbe0Zlzx9x/zC4j.pBD7Vdf11tcUxI0QGm"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gra w Kości</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div id="login-container" style="display: block">
+      <h2>Rejestracja</h2>
+      <input type="text" id="register-username" placeholder="Nazwa użytkownika" />
+      <input type="password" id="register-password" placeholder="Hasło" />
+      <button onclick="register()">Zarejestruj</button>
+      <p id="register-message"></p>
+
+      <h2>Logowanie</h2>
+      <input type="text" id="login-username" placeholder="Nazwa użytkownika" />
+      <input type="password" id="login-password" placeholder="Hasło" />
+      <button onclick="login()">Zaloguj</button>
+      <p id="login-message"></p>
+    </div>
+    <div id="main-container" style="display: none">
+      <div id="search">
+        <h2>Wyszukiwarka</h2>
+        <input type="text" id="user-search" placeholder="Nazwa użytkownika" />
+        <button onClick="search()">Zatwierdź</button>
+      </div>
+      <div id="profile">
+        <h2>Profil</h2>
+        <button onclick="logout()">Wyloguj</button>
+        <button onclick="remove()">Usuń konto</button>
+      </div>
+    </div>
+    <script src="skrypt.js"></script>
+  </body>
+</html>
