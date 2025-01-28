@@ -59,3 +59,29 @@ async function logout() {
     console.error("Błąd przy wylogowywaniu");
   }
 }
+
+async function search() {
+  const query = document.getElementById("user-search").value;
+
+  try {
+    const response = await axios.get(`/users/search?query=${query}`);
+
+    const usersList = response.data.users;
+    const resultsContainer = document.getElementById("search-results");
+
+    resultsContainer.innerHTML = "";
+
+    if (usersList.length === 0) {
+      resultsContainer.innerText = "Brak wyników";
+      return;
+    }
+
+    usersList.forEach((user) => {
+      const userElement = document.createElement("p");
+      userElement.innerText = user.username;
+      resultsContainer.appendChild(userElement);
+    });
+  } catch (error) {
+    document.getElementById("search-results").innerText = error.response?.data?.message || "Błąd wyszukiwania";
+  }
+}

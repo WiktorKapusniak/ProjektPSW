@@ -2,7 +2,15 @@
   "users": [
     {
       "username": "test",
-      "password": "$2b$10$ericeqS4WCRuczuvFpHotu4r/./QX6hM1GifrdYiAJZFksVF45nNy"
+      "password": "$2b$10$DuNSZ4coKJbPJPqxFrk1QuoGvAUtvZO3Y1HqL57kJBSRkHsNSHTtW"
+    },
+    {
+      "username": "kacper",
+      "password": "$2b$10$iQyPB.bYgJVbnn/zrPUXP.hpbM95X1UokfhAGQgLNf6ULMvizd0rq"
+    },
+    {
+      "username": "aa",
+      "password": "$2b$10$6M/zjasdSM6NCIU7Gew1genvygouDJN3P0C0Aumxigrrtj9yfS6Fm"
     }
   ]
 }

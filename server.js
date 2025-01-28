@@ -3,6 +3,7 @@ const fs = require("fs");
 const bcrypt = require("bcrypt");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const https = require("https");
 
 const app = express();
 const port = 3000;
@@ -11,6 +12,10 @@ const usersFile = "./data/users.json";
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static("public"));
+
+const privateKey = fs.readFileSync("key.pem", "utf8");
+const certificate = fs.readFileSync("cert.pem", "utf8");
+const credentials = { key: privateKey, cert: certificate };
 
 // Funkcja do wczytywania użytkowników
 const getUsers = () => {
@@ -54,8 +59,8 @@ app.post("/users/login", (req, res) => {
     return res.status(401).json({ message: "Nieprawidłowe dane logowania" });
   }
 
-  res.cookie("username", username, { httpOnly: true });
-  res.cookie("passwd", password, { httpOnly: true });
+  res.cookie("username", username, { httpOnly: true, secure: true, sameSite: "strict" });
+  res.cookie("passwd", password, { httpOnly: true, secure: true, sameSite: "strict" });
 
   res.json({ message: "Logowanie udane!", username });
 });
@@ -96,6 +101,13 @@ app.post("/users/logout", (req, res) => {
   res.json({ message: "Wylogowano" });
 });
 
-app.listen(port, () => {
-  console.log(`Serwer działa na http://localhost:${port}`);
+app.get("/users/search", (req, res) => {
+  const query = req.query.query.toLowerCase();
+  const users = getUsers();
+  const filteredUsers = users.filter((user) => user.username.toLowerCase().includes(query));
+  res.json({ users: filteredUsers });
+});
+
+https.createServer(credentials, app).listen(port, () => {
+  console.log(`Serwer HTTPS działa na https://localhost:${port}`);
 });
