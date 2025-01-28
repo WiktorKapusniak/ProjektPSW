@@ -1,7 +1,7 @@
 {
   "users": [
     {
-      "username": "test",
+      "username": "Comondo890",
       "password": "$2b$10$DuNSZ4coKJbPJPqxFrk1QuoGvAUtvZO3Y1HqL57kJBSRkHsNSHTtW"
     },
     {
@@ -11,6 +11,10 @@
     {
       "username": "aa",
       "password": "$2b$10$6M/zjasdSM6NCIU7Gew1genvygouDJN3P0C0Aumxigrrtj9yfS6Fm"
+    },
+    {
+      "username": "test10",
+      "password": "$2b$10$gqwzV0v9/AO/vKLb0ahV1ulk2VdkojFo5WBq3Jlxz22AkrBJIQ/bG"
     }
   ]
 }

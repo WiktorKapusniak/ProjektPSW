@@ -85,3 +85,50 @@ async function search() {
     document.getElementById("search-results").innerText = error.response?.data?.message || "Błąd wyszukiwania";
   }
 }
+
+async function changeUsername() {
+  const newUsername = document.getElementById("nickname-input").value.trim();
+  document.getElementById("profile-message").innerHTML = "";
+  try {
+    const response = await axios.patch("/users/update", { newUsername });
+
+    document.getElementById("profile-message").innerText = response.data.message;
+  } catch (error) {
+    document.getElementById("profile-message").innerText = error.response?.data?.message || "Błąd zmiany nazwy użytkownika";
+  }
+}
+
+const socket = io();
+
+// Po załadowaniu strony dołącz do chatu
+window.addEventListener("load", async () => {
+  try {
+    const response = await axios.get("/users/auth", { withCredentials: true });
+    if (response.data.message === "Zalogowany") {
+      socket.emit("joinChat", response.data.username);
+    }
+  } catch (error) {
+    console.error("Nie można dołączyć do chatu:", error);
+  }
+});
+
+// Obsługa wysyłania wiadomości
+document.getElementById("chat-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const msgInput = document.getElementById("msg");
+  const message = msgInput.value.trim();
+
+  if (message !== "") {
+    socket.emit("chatMessage", message);
+    msgInput.value = "";
+  }
+});
+
+// Odbieranie wiadomości i dodawanie do listy
+socket.on("message", (message) => {
+  const chatBox = document.getElementById("messages");
+  const msgElement = document.createElement("li");
+  msgElement.textContent = message;
+  chatBox.appendChild(msgElement);
+  chatBox.scrollTop = chatBox.scrollHeight;
+});

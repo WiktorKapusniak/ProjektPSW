@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gra w Kości</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -32,6 +33,18 @@
         <h2>Profil</h2>
         <button onclick="logout()">Wyloguj</button>
         <button onclick="remove()">Usuń konto</button>
+        <div id="change-nickname">
+          <input type="text" id="nickname-input" placeholder="Nowa nazwa" />
+          <button onclick="changeUsername()">Zmień</button>
+          <p id="profile-message"></p>
+        </div>
+      </div>
+      <div id="chat">
+        <ul id="messages"></ul>
+        <form id="chat-form">
+          <input id="msg" type="text" placeholder="Wpisz wiadomość" required />
+          <button type="submit">Wyślij</button>
+        </form>
       </div>
     </div>
     <script src="skrypt.js"></script>
