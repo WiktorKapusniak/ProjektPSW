@@ -99,63 +99,51 @@ async function changeUsername() {
 }
 
 const socket = io();
-async function joinChat() {
-  try {
-    await axios.post("/chat/join");
-    document.getElementById("chat-container").style.display = "block";
-    document.getElementById("join-container").style.display = "none";
-  } catch (error) {
-    alert("Błąd dołączania do chatu");
-  }
-}
 
-async function sendMessage() {
-  const message = document.getElementById("chat-message").value;
-
-  if (!message) {
-    alert("Wiadomość nie może być pusta!");
-    return;
-  }
-
-  try {
-    await axios.post("/chat/message", { message });
-    document.getElementById("chat-message").value = "";
-  } catch (error) {
-    alert("Błąd wysyłania wiadomości");
-  }
-}
-
-async function loadChatHistory() {
-  try {
-    const response = await axios.get("/chat/messages");
-    const messages = response.data.messages;
-
-    const chatBox = document.getElementById("chat-messages");
-    chatBox.innerHTML = "";
-
-    messages.forEach((msg) => {
-      const messageElement = document.createElement("p");
-      messageElement.textContent = `${msg.username}: ${msg.message}`;
-      chatBox.appendChild(messageElement);
+// ✅ Dołączenie do chatu
+function joinChat() {
+  document.getElementById("chat-container").style.display = "block";
+  document.getElementById("join-chat").style.display = "none";
+  axios
+    .get("/users/auth")
+    .then((res) => {
+      socket.emit("joinChat", { username: res.data.username });
+    })
+    .catch(() => {
+      alert("Musisz być zalogowany!");
     });
-  } catch (error) {
-    alert("Błąd pobierania historii czatu");
-  }
 }
 
-async function leaveChat() {
-  try {
-    await axios.delete("/chat/leave");
-    document.getElementById("chat-container").style.display = "none";
-    document.getElementById("join-container").style.display = "block";
-  } catch (error) {
-    alert("Błąd opuszczania chatu");
-  }
+// Wysyłanie wiadomości
+function sendMessage() {
+  const messageInput = document.getElementById("message-input");
+  const message = messageInput.value.trim();
+  if (!message) return;
+
+  socket.emit("chatMessage", message);
+  messageInput.value = "";
 }
 
-socket.on("message", (message) => {
-  const chatBox = document.getElementById("chat-messages");
-  const msgElement = document.createElement("p");
-  msgElement.textContent = message;
-  chatBox.appendChild(msgElement);
+function leaveChat() {
+  document.getElementById("chat-container").style.display = "none";
+  document.getElementById("join-chat").style.display = "block";
+  socket.emit("leaveChat");
+}
+// Odbieranie wiadomości
+socket.on("message", (data) => {
+  const messagesDiv = document.getElementById("messages");
+  const msgDiv = document.createElement("div");
+  msgDiv.textContent = `${data.username}: ${data.message}`;
+  messagesDiv.appendChild(msgDiv);
+});
+
+// Pobieranie historii wiadomości
+socket.on("chatHistory", (history) => {
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.innerHTML = "";
+  history.forEach((msg) => {
+    const msgDiv = document.createElement("div");
+    msgDiv.textContent = `${msg.username}: ${msg.message}`;
+    messagesDiv.appendChild(msgDiv);
+  });
 });

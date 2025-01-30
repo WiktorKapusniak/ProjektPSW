@@ -39,17 +39,14 @@
           <p id="profile-message"></p>
         </div>
       </div>
-      <div id="join-container">
-        <button onclick="joinChat()">Dołącz do chatu</button>
-      </div>
-
       <div id="chat-container" style="display: none">
-        <h2>Czat</h2>
-        <div id="chat-messages"></div>
-        <input type="text" id="chat-message" placeholder="Napisz wiadomość" />
+        <h2>💬 Globalny Chat</h2>
+        <div id="messages"></div>
+        <input type="text" id="message-input" placeholder="Wpisz wiadomość" />
         <button onclick="sendMessage()">Wyślij</button>
-        <button onclick="leaveChat()">Opuść chat</button>
+        <button onclick="leaveChat()">Opuść</button>
       </div>
+      <button onclick="joinChat()" id="join-chat">Dołącz do Chatu</button>
     </div>
     <script src="skrypt.js"></script>
   </body>

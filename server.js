@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const https = require("https");
 const { Server } = require("socket.io");
-
+const axios = require("axios");
 const app = express();
 const port = 3000;
 const usersFile = "./data/users.json";
@@ -21,8 +21,10 @@ const credentials = { key: privateKey, cert: certificate };
 const server = https.createServer(credentials, app);
 const io = new Server(server);
 
-const users = {};
-const chatMessages = [];
+const axiosInstance = axios.create({
+  baseURL: "http://localhost:3000",
+  timeout: 5000,
+});
 
 // Funkcja do wczytywania użytkowników
 const getUsers = () => {
@@ -134,44 +136,88 @@ app.patch("/users/update", (req, res) => {
 });
 
 // CHAT
-// Dołączenie do chatu
-app.post("/chat/join", (req, res) => {
-  const { username, passwd } = req.cookies;
+const chatHistory = [];
 
-  users[username] = true;
-  io.emit("message", `✅ ${username} dołączył do chatu.`);
-  res.json({ message: "Dołączono do chatu", username });
+// Pobieranie historii wiadomości
+app.get("/chat", (req, res) => {
+  res.json({ messages: chatHistory });
 });
 
-// Wysłanie wiadomości
-app.post("/chat/message", (req, res) => {
-  const { message } = req.body;
-  const { username, passwd } = req.cookies;
+// Wysyłanie wiadomości
+app.post("/chat", (req, res) => {
+  const { username, message } = req.body;
   if (!username || !message) {
-    return res.status(400).json({ message: "Brak treści wiadomości lub nazwy użytkownika" });
+    return res.status(400).json({ message: "Brak danych" });
   }
 
-  const chatMessage = { username, message, timestamp: new Date().toISOString() };
-  chatMessages.push(chatMessage);
-  io.emit("message", `${username}: ${message}`);
-  res.json({ message: "Wiadomość wysłana", chatMessage });
-});
+  const newMessage = { username, message };
+  chatHistory.push(newMessage);
 
-// Pobranie historii wiadomości
-app.get("/chat/messages", (req, res) => {
-  res.json({ messages: chatMessages });
-});
-
-// Opuszczenie chatu
-app.delete("/chat/leave", (req, res) => {
-  const { username, passwd } = req.cookies;
-  if (!users[username]) {
-    return res.status(404).json({ message: "Użytkownik nie jest na czacie" });
+  // 🔹 Ograniczamy historię do 50 wiadomości
+  if (chatHistory.length > 50) {
+    chatHistory.shift();
   }
 
-  delete users[username];
-  io.emit("message", `❌ ${username} opuścił chat.`);
-  res.json({ message: "Użytkownik opuścił chat" });
+  res.status(201).json({ message: "Wiadomość zapisana", newMessage });
+});
+
+// Czyszczenie historii chatu
+app.delete("/chat", (req, res) => {
+  chatHistory.length = 0;
+  res.json({ message: "Historia czatu wyczyszczona" });
+});
+
+//Obsługa chatu w czasie rzeczywistym
+io.on("connection", (socket) => {
+  console.log("Nowe połączenie:", socket.id);
+
+  // 🔹 Pobieranie username z cookies
+  socket.on("joinChat", async (cookies) => {
+    const username = cookies.username;
+    if (!username) {
+      return socket.emit("error", "Brak nazwy użytkownika");
+    }
+
+    socket.username = username;
+    console.log(`✅ ${username} dołączył do chatu`);
+
+    // Wysyłamy historię wiadomości nowemu użytkownikowi
+    socket.emit("chatHistory", chatHistory);
+
+    // Powiadamiamy innych użytkowników
+    io.emit("message", { username: "System", message: `${username} dołączył do chatu` });
+  });
+
+  // Obsługa wysyłania wiadomości
+  socket.on("chatMessage", async (message) => {
+    if (!socket.username) return;
+
+    const newMessage = { username: socket.username, message };
+    chatHistory.push(newMessage);
+    io.emit("message", newMessage);
+
+    // 🔹 Zapisujemy wiadomość w REST API
+    try {
+      await axiosInstance.post("/chat", newMessage);
+    } catch (error) {
+      console.error("Błąd zapisu wiadomości w REST API:", error.message);
+    }
+  });
+  socket.on("leaveChat", () => {
+    if (socket.username) {
+      io.emit("message", { username: "System", message: `${socket.username} opuścił czat` });
+      console.log(`❌ ${socket.username} opuścił czat`);
+    }
+
+    socket.leave("globalChat"); // Opcjonalnie opuszczamy pokój
+  });
+  //Obsługa rozłączenia
+  socket.on("disconnect", () => {
+    if (socket.username) {
+      io.emit("message", { username: "System", message: `${socket.username} opuścił czat` });
+      console.log(`❌ ${socket.username} opuścił czat`);
+    }
+  });
 });
 
 server.listen(port, () => {
