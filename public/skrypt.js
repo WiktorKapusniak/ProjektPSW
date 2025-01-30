@@ -99,36 +99,63 @@ async function changeUsername() {
 }
 
 const socket = io();
-
-// Po załadowaniu strony dołącz do chatu
-window.addEventListener("load", async () => {
+async function joinChat() {
   try {
-    const response = await axios.get("/users/auth", { withCredentials: true });
-    if (response.data.message === "Zalogowany") {
-      socket.emit("joinChat", response.data.username);
-    }
+    await axios.post("/chat/join");
+    document.getElementById("chat-container").style.display = "block";
+    document.getElementById("join-container").style.display = "none";
   } catch (error) {
-    console.error("Nie można dołączyć do chatu:", error);
+    alert("Błąd dołączania do chatu");
   }
-});
+}
 
-// Obsługa wysyłania wiadomości
-document.getElementById("chat-form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const msgInput = document.getElementById("msg");
-  const message = msgInput.value.trim();
+async function sendMessage() {
+  const message = document.getElementById("chat-message").value;
 
-  if (message !== "") {
-    socket.emit("chatMessage", message);
-    msgInput.value = "";
+  if (!message) {
+    alert("Wiadomość nie może być pusta!");
+    return;
   }
-});
 
-// Odbieranie wiadomości i dodawanie do listy
+  try {
+    await axios.post("/chat/message", { message });
+    document.getElementById("chat-message").value = "";
+  } catch (error) {
+    alert("Błąd wysyłania wiadomości");
+  }
+}
+
+async function loadChatHistory() {
+  try {
+    const response = await axios.get("/chat/messages");
+    const messages = response.data.messages;
+
+    const chatBox = document.getElementById("chat-messages");
+    chatBox.innerHTML = "";
+
+    messages.forEach((msg) => {
+      const messageElement = document.createElement("p");
+      messageElement.textContent = `${msg.username}: ${msg.message}`;
+      chatBox.appendChild(messageElement);
+    });
+  } catch (error) {
+    alert("Błąd pobierania historii czatu");
+  }
+}
+
+async function leaveChat() {
+  try {
+    await axios.delete("/chat/leave");
+    document.getElementById("chat-container").style.display = "none";
+    document.getElementById("join-container").style.display = "block";
+  } catch (error) {
+    alert("Błąd opuszczania chatu");
+  }
+}
+
 socket.on("message", (message) => {
-  const chatBox = document.getElementById("messages");
-  const msgElement = document.createElement("li");
+  const chatBox = document.getElementById("chat-messages");
+  const msgElement = document.createElement("p");
   msgElement.textContent = message;
   chatBox.appendChild(msgElement);
-  chatBox.scrollTop = chatBox.scrollHeight;
 });

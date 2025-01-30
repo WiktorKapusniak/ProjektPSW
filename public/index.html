@@ -39,12 +39,16 @@
           <p id="profile-message"></p>
         </div>
       </div>
-      <div id="chat">
-        <ul id="messages"></ul>
-        <form id="chat-form">
-          <input id="msg" type="text" placeholder="Wpisz wiadomość" required />
-          <button type="submit">Wyślij</button>
-        </form>
+      <div id="join-container">
+        <button onclick="joinChat()">Dołącz do chatu</button>
+      </div>
+
+      <div id="chat-container" style="display: none">
+        <h2>Czat</h2>
+        <div id="chat-messages"></div>
+        <input type="text" id="chat-message" placeholder="Napisz wiadomość" />
+        <button onclick="sendMessage()">Wyślij</button>
+        <button onclick="leaveChat()">Opuść chat</button>
       </div>
     </div>
     <script src="skrypt.js"></script>

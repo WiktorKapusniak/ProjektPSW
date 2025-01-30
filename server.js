@@ -22,6 +22,7 @@ const server = https.createServer(credentials, app);
 const io = new Server(server);
 
 const users = {};
+const chatMessages = [];
 
 // Funkcja do wczytywania użytkowników
 const getUsers = () => {
@@ -132,26 +133,45 @@ app.patch("/users/update", (req, res) => {
   res.json({ message: "Nazwa użytkownika zmieniona!", newUsername });
 });
 
-io.on("connection", (socket) => {
-  // Dołączenie do chatu
-  socket.on("joinChat", (username) => {
-    users[socket.id] = username;
-    io.emit("message", `✅ ${username} dołączył do chatu.`);
-  });
+// CHAT
+// Dołączenie do chatu
+app.post("/chat/join", (req, res) => {
+  const { username, passwd } = req.cookies;
 
-  // Otrzymywanie wiadomości od klienta
-  socket.on("chatMessage", (message) => {
-    const username = users[socket.id] || "Anonim";
-    io.emit("message", `${username}: ${message}`);
-  });
+  users[username] = true;
+  io.emit("message", `✅ ${username} dołączył do chatu.`);
+  res.json({ message: "Dołączono do chatu", username });
+});
 
-  // Rozłączenie użytkownika
-  socket.on("disconnect", () => {
-    if (users[socket.id]) {
-      io.emit("message", `❌ ${users[socket.id]} opuścił chat.`);
-      delete users[socket.id];
-    }
-  });
+// Wysłanie wiadomości
+app.post("/chat/message", (req, res) => {
+  const { message } = req.body;
+  const { username, passwd } = req.cookies;
+  if (!username || !message) {
+    return res.status(400).json({ message: "Brak treści wiadomości lub nazwy użytkownika" });
+  }
+
+  const chatMessage = { username, message, timestamp: new Date().toISOString() };
+  chatMessages.push(chatMessage);
+  io.emit("message", `${username}: ${message}`);
+  res.json({ message: "Wiadomość wysłana", chatMessage });
+});
+
+// Pobranie historii wiadomości
+app.get("/chat/messages", (req, res) => {
+  res.json({ messages: chatMessages });
+});
+
+// Opuszczenie chatu
+app.delete("/chat/leave", (req, res) => {
+  const { username, passwd } = req.cookies;
+  if (!users[username]) {
+    return res.status(404).json({ message: "Użytkownik nie jest na czacie" });
+  }
+
+  delete users[username];
+  io.emit("message", `❌ ${username} opuścił chat.`);
+  res.json({ message: "Użytkownik opuścił chat" });
 });
 
 server.listen(port, () => {
