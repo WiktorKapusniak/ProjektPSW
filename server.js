@@ -138,12 +138,10 @@ app.patch("/users/update", (req, res) => {
 // CHAT
 const chatHistory = [];
 
-// Pobieranie historii wiadomości
 app.get("/chat", (req, res) => {
   res.json({ messages: chatHistory });
 });
 
-// Wysyłanie wiadomości
 app.post("/chat", (req, res) => {
   const { username, message } = req.body;
   if (!username || !message) {
@@ -153,7 +151,6 @@ app.post("/chat", (req, res) => {
   const newMessage = { username, message };
   chatHistory.push(newMessage);
 
-  // 🔹 Ograniczamy historię do 50 wiadomości
   if (chatHistory.length > 50) {
     chatHistory.shift();
   }
@@ -161,17 +158,14 @@ app.post("/chat", (req, res) => {
   res.status(201).json({ message: "Wiadomość zapisana", newMessage });
 });
 
-// Czyszczenie historii chatu
 app.delete("/chat", (req, res) => {
   chatHistory.length = 0;
   res.json({ message: "Historia czatu wyczyszczona" });
 });
 
-//Obsługa chatu w czasie rzeczywistym
 io.on("connection", (socket) => {
   console.log("Nowe połączenie:", socket.id);
 
-  // 🔹 Pobieranie username z cookies
   socket.on("joinChat", async (cookies) => {
     const username = cookies.username;
     if (!username) {
@@ -179,16 +173,13 @@ io.on("connection", (socket) => {
     }
 
     socket.username = username;
-    console.log(`✅ ${username} dołączył do chatu`);
+    console.log(`${username} dołączył do chatu`);
 
-    // Wysyłamy historię wiadomości nowemu użytkownikowi
     socket.emit("chatHistory", chatHistory);
 
-    // Powiadamiamy innych użytkowników
     io.emit("message", { username: "System", message: `${username} dołączył do chatu` });
   });
 
-  // Obsługa wysyłania wiadomości
   socket.on("chatMessage", async (message) => {
     if (!socket.username) return;
 
@@ -196,7 +187,6 @@ io.on("connection", (socket) => {
     chatHistory.push(newMessage);
     io.emit("message", newMessage);
 
-    // 🔹 Zapisujemy wiadomość w REST API
     try {
       await axiosInstance.post("/chat", newMessage);
     } catch (error) {
@@ -206,20 +196,113 @@ io.on("connection", (socket) => {
   socket.on("leaveChat", () => {
     if (socket.username) {
       io.emit("message", { username: "System", message: `${socket.username} opuścił czat` });
-      console.log(`❌ ${socket.username} opuścił czat`);
+      console.log(`${socket.username} opuścił czat`);
     }
 
-    socket.leave("globalChat"); // Opcjonalnie opuszczamy pokój
+    socket.leave("globalChat");
   });
-  //Obsługa rozłączenia
+
   socket.on("disconnect", () => {
     if (socket.username) {
       io.emit("message", { username: "System", message: `${socket.username} opuścił czat` });
-      console.log(`❌ ${socket.username} opuścił czat`);
+      console.log(`${socket.username} opuścił czat`);
     }
   });
 });
 
+const gameRooms = {};
+
+io.on("connection", (socket) => {
+  console.log("Nowe połączenie:", socket.id);
+
+  socket.on("joinGame", ({ room }) => {
+    if (!gameRooms[room]) {
+      gameRooms[room] = { players: [], scores: {}, dice: {}, currentTurn: null };
+    }
+
+    if (gameRooms[room].players.length >= 2) {
+      socket.emit("error", "Pokój jest już pełny!");
+      return;
+    }
+    gameRooms[room].players.push(socket.id);
+    socket.join(room);
+
+    io.to(room).emit("gameStatus", `Gracze w pokoju: ${gameRooms[room].players.length}/2`);
+
+    if (gameRooms[room].players.length === 2) {
+      gameRooms[room].currentTurn = gameRooms[room].players[0];
+      io.to(room).emit("enableStartGame");
+    }
+  });
+
+  socket.on("startGame", ({ room }) => {
+    if (gameRooms[room] && gameRooms[room].players.length === 2) {
+      gameRooms[room].scores = {};
+      gameRooms[room].dice = {};
+
+      gameRooms[room].players.forEach((playerId) => {
+        rollDice(room, playerId);
+      });
+
+      io.to(room).emit("gameStatus", "Gra rozpoczęta! Pierwszy gracz rzuca kośćmi.");
+      io.to(gameRooms[room].currentTurn).emit("yourTurn", "Twoja kolej!");
+    }
+  });
+
+  function rollDice(room, playerId) {
+    gameRooms[room].dice[playerId] = Array.from({ length: 5 }, () => Math.floor(Math.random() * 6) + 1);
+    io.to(playerId).emit("rollDice", { dice: gameRooms[room].dice[playerId] });
+  }
+
+  socket.on("rerollDice", ({ room, selected }) => {
+    const playerId = socket.id;
+    if (!gameRooms[room] || !gameRooms[room].dice[playerId]) return;
+
+    selected.forEach((index) => {
+      gameRooms[room].dice[playerId][index] = Math.floor(Math.random() * 6) + 1;
+    });
+
+    io.to(playerId).emit("rollDice", { dice: gameRooms[room].dice[playerId] });
+  });
+
+  socket.on("endTurn", ({ room }) => {
+    if (!gameRooms[room]) return;
+
+    const playerId = socket.id;
+    gameRooms[room].scores[playerId] = gameRooms[room].dice[playerId].reduce((sum, val) => sum + val, 0);
+
+    const players = gameRooms[room].players;
+    if (Object.keys(gameRooms[room].scores).length === 2) {
+      const [player1, player2] = players;
+      const score1 = gameRooms[room].scores[player1];
+      const score2 = gameRooms[room].scores[player2];
+
+      if (score1 > score2) {
+        io.to(player1).emit("gameResult", "🏆 Wygrałeś!");
+        io.to(player2).emit("gameResult", "😞 Przegrałeś!");
+      } else if (score1 < score2) {
+        io.to(player1).emit("gameResult", "😞 Przegrałeś!");
+        io.to(player2).emit("gameResult", "🏆 Wygrałeś!");
+      } else {
+        io.to(room).emit("gameResult", "🤝 Remis!");
+      }
+    } else {
+      gameRooms[room].currentTurn = players.find((id) => id !== playerId);
+      io.to(gameRooms[room].currentTurn).emit("yourTurn", "Twoja kolej!");
+    }
+  });
+
+  socket.on("leaveGame", ({ room }) => {
+    socket.leave(room);
+    gameRooms[room].players = gameRooms[room].players.filter((id) => id !== socket.id);
+
+    if (gameRooms[room].players.length === 0) {
+      delete gameRooms[room];
+    } else {
+      io.to(room).emit("gameStatus", "Drugi gracz opuścił pokój, czekamy na nowego...");
+    }
+  });
+});
 server.listen(port, () => {
   console.log(`Serwer HTTPS działa na https://localhost:${port}`);
 });

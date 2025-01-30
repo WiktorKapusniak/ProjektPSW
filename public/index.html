@@ -47,6 +47,32 @@
         <button onclick="leaveChat()">Opuść</button>
       </div>
       <button onclick="joinChat()" id="join-chat">Dołącz do Chatu</button>
+      <div id="game-lobby">
+        <h2>🎲 Gra w Kości</h2>
+        <input type="text" id="room-input" placeholder="Wpisz numer pokoju" />
+        <button onclick="joinGame()">Dołącz do gry</button>
+      </div>
+
+      <!-- Pokój gry -->
+      <div id="game-room" style="display: none">
+        <h2>🕹️ Pokój: <span id="room-name"></span></h2>
+        <p id="game-status">Oczekiwanie na drugiego gracza...</p>
+
+        <!-- Kontrola gry -->
+        <button id="start-game" onclick="startGame()" disabled>Rozpocznij grę</button>
+        <button onclick="leaveGame()">Opuść pokój</button>
+
+        <!-- Obszar rzutu kośćmi -->
+        <div id="dice-area" style="display: none">
+          <h3>🎲 Rzuć kośćmi</h3>
+          <div id="dice"></div>
+          <button id="reroll-btn" onclick="rerollDice()" disabled>Przerzuć wybrane</button>
+          <button id="end-turn-btn" onclick="endTurn()" disabled>Zakończ turę</button>
+        </div>
+
+        <!-- Wynik gry -->
+        <h3 id="game-result"></h3>
+      </div>
     </div>
     <script src="skrypt.js"></script>
   </body>

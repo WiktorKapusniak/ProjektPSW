@@ -97,10 +97,9 @@ async function changeUsername() {
     document.getElementById("profile-message").innerText = error.response?.data?.message || "Błąd zmiany nazwy użytkownika";
   }
 }
-
+//CHAT
 const socket = io();
 
-// ✅ Dołączenie do chatu
 function joinChat() {
   document.getElementById("chat-container").style.display = "block";
   document.getElementById("join-chat").style.display = "none";
@@ -114,7 +113,6 @@ function joinChat() {
     });
 }
 
-// Wysyłanie wiadomości
 function sendMessage() {
   const messageInput = document.getElementById("message-input");
   const message = messageInput.value.trim();
@@ -129,7 +127,6 @@ function leaveChat() {
   document.getElementById("join-chat").style.display = "block";
   socket.emit("leaveChat");
 }
-// Odbieranie wiadomości
 socket.on("message", (data) => {
   const messagesDiv = document.getElementById("messages");
   const msgDiv = document.createElement("div");
@@ -137,7 +134,6 @@ socket.on("message", (data) => {
   messagesDiv.appendChild(msgDiv);
 });
 
-// Pobieranie historii wiadomości
 socket.on("chatHistory", (history) => {
   const messagesDiv = document.getElementById("messages");
   messagesDiv.innerHTML = "";
@@ -146,4 +142,101 @@ socket.on("chatHistory", (history) => {
     msgDiv.textContent = `${msg.username}: ${msg.message}`;
     messagesDiv.appendChild(msgDiv);
   });
+});
+//GRA
+let room = "";
+let diceValues = [];
+let selectedDice = new Set();
+
+function joinGame() {
+  room = document.getElementById("room-input").value.trim();
+  if (!room) {
+    alert("Podaj numer pokoju!");
+    return;
+  }
+
+  document.getElementById("game-lobby").style.display = "none";
+  document.getElementById("game-room").style.display = "block";
+  document.getElementById("room-name").innerText = room;
+
+  socket.emit("joinGame", { room });
+}
+
+function startGame() {
+  socket.emit("startGame", { room });
+}
+
+function leaveGame() {
+  socket.emit("leaveGame", { room });
+  document.getElementById("game-lobby").style.display = "block";
+  document.getElementById("game-room").style.display = "none";
+}
+
+socket.on("gameStatus", (status) => {
+  document.getElementById("game-status").innerText = status;
+});
+
+socket.on("enableStartGame", () => {
+  document.getElementById("start-game").disabled = false;
+});
+
+socket.on("yourTurn", (message) => {
+  document.getElementById("game-status").innerText = message;
+  document.getElementById("dice-area").style.display = "block";
+  document.getElementById("reroll-btn").disabled = false;
+  document.getElementById("end-turn-btn").disabled = false;
+});
+
+socket.on("rollDice", (data) => {
+  diceValues = data.dice;
+  updateDiceDisplay();
+});
+
+function updateDiceDisplay() {
+  const diceDiv = document.getElementById("dice");
+  diceDiv.innerHTML = "";
+
+  diceValues.forEach((value, index) => {
+    const dice = document.createElement("div");
+    dice.textContent = value;
+    dice.className = "dice";
+
+    if (selectedDice.has(index)) {
+      dice.classList.add("selected");
+    }
+
+    dice.onclick = () => {
+      toggleDiceSelection(index);
+      updateDiceDisplay();
+    };
+
+    diceDiv.appendChild(dice);
+  });
+}
+
+function toggleDiceSelection(index) {
+  if (selectedDice.has(index)) {
+    selectedDice.delete(index);
+  } else {
+    selectedDice.add(index);
+  }
+  updateDiceDisplay();
+}
+
+function rerollDice() {
+  if (selectedDice.size === 0) return;
+  socket.emit("rerollDice", { room, selected: Array.from(selectedDice) });
+  selectedDice.clear();
+
+  document.getElementById("reroll-btn").disabled = true;
+}
+
+function endTurn() {
+  socket.emit("endTurn", { room });
+  document.getElementById("reroll-btn").disabled = true;
+  document.getElementById("end-turn-btn").disabled = true;
+}
+
+socket.on("gameResult", (result) => {
+  document.getElementById("game-result").innerText = result;
 });

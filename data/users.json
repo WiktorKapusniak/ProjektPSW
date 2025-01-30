@@ -1,10 +1,6 @@
 {
   "users": [
     {
-      "username": "Comondo",
-      "password": "$2b$10$DuNSZ4coKJbPJPqxFrk1QuoGvAUtvZO3Y1HqL57kJBSRkHsNSHTtW"
-    },
-    {
       "username": "kacper",
       "password": "$2b$10$iQyPB.bYgJVbnn/zrPUXP.hpbM95X1UokfhAGQgLNf6ULMvizd0rq"
     },
@@ -13,8 +9,16 @@
       "password": "$2b$10$6M/zjasdSM6NCIU7Gew1genvygouDJN3P0C0Aumxigrrtj9yfS6Fm"
     },
     {
-      "username": "test10",
-      "password": "$2b$10$gqwzV0v9/AO/vKLb0ahV1ulk2VdkojFo5WBq3Jlxz22AkrBJIQ/bG"
+      "username": "5",
+      "password": "$2b$10$UsxXO4XYCGjFRaXO1XKWVuN9bLuN0b9W6rlnIDVbhVylKn8pMvCma"
+    },
+    {
+      "username": "6",
+      "password": "$2b$10$6Y6.z5T/VXSougYiaJmrG.zh3mXsRkp05kBssqDDfNBgxSRIZYzzW"
+    },
+    {
+      "username": "test",
+      "password": "$2b$10$4ZdXas58Jr2Sma5rQzygKe.OX2QR8/CxVja9PTId4HdN6Myyh.YO2"
     }
   ]
 }
